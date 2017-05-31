@@ -52,15 +52,15 @@ class RoverState():
         self.nav_angles = None # Angles of navigable terrain pixels
         self.nav_dists = None # Distances of navigable terrain pixels
         self.ground_truth = ground_truth_3d # Ground truth worldmap
-        self.mode = 'forward' # Current mode (can be forward or stop)
+        self.mode = 'stop' # Current mode (can be forward or stop)
         self.throttle_set = 0.2 # Throttle setting when accelerating
         self.brake_set = 10 # Brake setting when braking
         # The stop_forward and go_forward fields below represent total count
         # of navigable terrain pixels.  This is a very crude form of knowing
         # when you can keep going and when you should stop.  Feel free to
         # get creative in adding new fields or modifying these!
-        self.stop_forward = 50 # Threshold to initiate stopping
-        self.go_forward = 500 # Threshold to go forward again
+        self.stop_forward = 20 # Threshold to initiate stopping
+        self.go_forward = 100 # Threshold to go forward again
         self.max_vel = 2 # Maximum velocity (meters/second)
         # Image output from perception step
         # Update this image to display your intermediate analysis steps
@@ -76,8 +76,63 @@ class RoverState():
         self.near_sample = 0 # Will be set to telemetry value data["near_sample"]
         self.picking_up = 0 # Will be set to telemetry value data["picking_up"]
         self.send_pickup = False # Set to True to trigger rock pickup
+        self.rock_picked = []
+        self.goal = None
+        self.now = None
+        self.goal_dist = None
+        self.steering_angle = None
+        self.nodes = None
+        self.end_nodes = None
+        self.plan = None
 # Initialize our rover 
 Rover = RoverState()
+
+def initialize_nodes():
+    end_nodes = []
+    # north
+    node_start = (99.7, 88.6)
+    node_north = (134.3, 109.3)
+    nodes = [node_start, node_north]
+    # left
+    #node_north_left = (116.7, 133.6)
+    node_north_left = (107.4, 156.1)
+    node_north_left1 = (102.0, 183.9)
+    end_nodes.append(node_north_left1)
+    nodes.extend([node_north_left, node_north_left1, node_north_left, node_north])
+    # right
+    node_north_right = (145.1, 95.4)
+    end_nodes.append(node_north_right)
+    nodes.extend([node_north_right, node_north])
+    # back, left
+    node_east = (103.1, 74.5)
+    nodes.extend([node_start, node_east])
+    # left, forward
+    node_east1 = (110.2, 48.5)
+    node_east_left = (120.2, 50.9)
+    node_east_right = (114.0, 9.8)
+    end_nodes.extend([node_east_left, node_east_right])
+    nodes.extend([node_east1, node_east_left, node_east1, node_east_right])
+    # back, left
+    node_south = (91.8, 78.0)
+    nodes.extend([node_east1, node_east, node_south])
+    # left, right, forward
+    node_south1 = (80.8, 79.7)
+    node_south1_left = (76.3, 71.9)
+    end_nodes.append(node_south1_left)
+    nodes.extend([node_south1, node_south1_left, node_south1])
+    node_south2 = (58.2, 93.4)
+    node_south2_right = (61.5, 104.6)
+    end_nodes.append(node_south2_right)
+    nodes.extend([node_south2, node_south2_right, node_south2])
+    node_south2_forward = (15.9, 98.9)
+    end_nodes.append(node_south2_forward)
+    nodes.extend([node_south2_forward, node_south2, node_south1, node_south])
+    # back
+    nodes.extend([node_start])
+    return nodes, end_nodes
+
+
+Rover.nodes, Rover.end_nodes = initialize_nodes()
 
 # Variables to track frames per second (FPS)
 # Intitialize frame counter
